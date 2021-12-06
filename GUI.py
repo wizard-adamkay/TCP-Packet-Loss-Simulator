@@ -8,13 +8,25 @@ from packet import Packet
 
 
 class GUI:
+    fig = plt.Figure(figsize=(3, 2), dpi=100)
+    delay = 0
+    packetLoss = 0
+    baseTime = time.time()
+    a = fig.add_subplot(111)
+    line1, = a.plot([0], [0], 'r-')
+    line2, = a.plot([0], [0], 'b-')
 
     def printTest(self):
         print("Delay: " + str(self.delay) + " Loss: " + str(self.packetLoss))
 
-    def __init__(self, delay, packetLoss):
-        self.delay = delay
-        self.packetLoss = packetLoss
+    def update_graph(self, lineNum, y):
+        print("lineNum: " + str(lineNum) + " y: " + str(y))
+        t1 = time.time()
+        self.line1.set_xdata(np.append(self.line1.get_xdata(), t1 - self.baseTime))
+        self.line1.set_ydata(np.append(self.line1.get_ydata(), y))
+        self.a.set_xlim([0, max(30, t1 - self.baseTime + 2)])
+        self.a.set_ylim([0, max(50, y + 2)])
+        self.fig.canvas.draw()
 
     def run(self):
         top = tkinter.Tk()
@@ -22,13 +34,6 @@ class GUI:
         top.geometry("700x500")
         lineTracker = 1.0
         baseTime = time
-
-        def update_graph(line, y):
-            global baseTime
-            t1 = time.time()
-            line.set_xdata(np.append(line.get_xdata(), t1 - baseTime))
-            line.set_ydata(np.append(line.get_ydata(), y))
-            fig.canvas.draw()
 
         def message(msg):
             global lineTracker
@@ -39,8 +44,7 @@ class GUI:
             messageBox.see("end")
 
         def start_call_back():
-            global baseTime
-            baseTime = time.time()
+            self.baseTime = time.time()
             clear_call_back()
             stop['state'] = NORMAL
             start['state'] = DISABLED
@@ -53,7 +57,11 @@ class GUI:
             message("stopping, duration was:" + str(t0 - baseTime))
 
         def clear_call_back():
-            message("clearing")
+            t1 = time.time()
+            self.line1.set_xdata(np.append(self.line1.get_xdata(), t1 - self.baseTime))
+            self.line1.set_ydata(np.append(self.line1.get_ydata(), 1))
+            self.fig.canvas.draw()
+            #message("clearing")
 
         def update_error_slider(num):
             errorLabel['text'] = "Error rate: " + num + "%"
@@ -72,16 +80,13 @@ class GUI:
         controls.pack(side=RIGHT)
         buttons = Frame(controls)
         buttons.pack(side=BOTTOM)
-        fig = plt.Figure(figsize=(3, 2), dpi=100)
-        a = fig.add_subplot(111)
-        chart = FigureCanvasTkAgg(fig, graphs)
+        chart = FigureCanvasTkAgg(self.fig, graphs)
         Label(graphs, text="Sequence Number Over Time").pack()
         chart.get_tk_widget().pack()
-        line1, = a.plot([0], [0], 'r-')
-        a.set_xlim([0, 25])
-        a.set_ylim([0, 25])
+        self.a.set_xlim([0, 30])
+        self.a.set_ylim([0, 50])
 
-        delaySlider = Scale(controls, orient=HORIZONTAL, from_=0, to=10000, length=300, command=update_delay_slider,
+        delaySlider = Scale(controls, orient=HORIZONTAL, from_=0, to=1000, length=300, command=update_delay_slider,
                             showvalue=0)
         delayLabel = Label(controls, text="Delay: " + str(delaySlider.get()) + "(ms)")
         delayLabel.pack()

@@ -27,6 +27,7 @@ packetsFromReceiverTimes = []
 lastPacketSentToTransmitter = 0
 transmitterConnected = False
 
+
 def listenToTransmitter():
     global transmitterConnected
     try:
@@ -53,6 +54,7 @@ def listenToTransmitter():
             logging.info("Transmitter > Network: " + str(data_variable.seqNum))
             packetsFromTransmitter.append(data_variable)
             packetsFromTransmitterTimes.append(time.time())
+            GUI.update_graph(0,data_variable.seqNum)
             # todo close connection when stop clicked
         connection.close()
     s.close()
@@ -133,7 +135,7 @@ def sendToReceiver():
     s.close()
 
 
-GUI = GUI(0, 0)
+GUI = GUI()
 start_new_thread(listenToTransmitter, ())
 start_new_thread(listenToReceiver, ())
 start_new_thread(sendToTransmitter, ())
