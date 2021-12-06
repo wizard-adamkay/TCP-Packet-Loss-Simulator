@@ -41,12 +41,12 @@ def listenToTransmitter():
             data_variable = pickle.loads(data)
             print("received from transmitter seq:" + str(data_variable.seqNum))
             packetsFromTransmitter.append(data_variable)
-            if data_variable.packetType == 2:
-                break
+            # todo close connection when stop clicked
         connection.close()
     s.close()
 
 
+# could combine listentoreciever and listen to transmitter into 1 function
 def listenToReceiver():
     try:
         s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -70,8 +70,7 @@ def listenToReceiver():
             data_variable = pickle.loads(data)
             print("received from receiver ack:" + str(data_variable.ackNum))
             packetsFromReceiver.append(data_variable)
-            if data_variable.packetType == 2:
-                break
+            # todo close connection when stop clicked
         connection.close()
     s.close()
 
@@ -89,7 +88,7 @@ def sendToTransmitter():
             print("packet sent to transmitter ack: " + str(packetsFromReceiver[lastPacketSentToTransmitter].ackNum))
             lastPacketSentToTransmitter += 1
             continue
-        time.sleep(.1)
+        time.sleep(.03)
     s.close()
 
 
@@ -106,7 +105,7 @@ def sendToReceiver():
             lastPacketSentToReceiver += 1
             s.send(packet)
             continue
-        time.sleep(.1)
+        time.sleep(.03)
     s.close()
 
 

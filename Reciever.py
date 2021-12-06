@@ -10,9 +10,13 @@ myHost = ''
 relayHost = 'localhost'
 myPort = 8004
 relayPort = 8003
+highestSequentialSeqNum = -1
+done = False
+
 
 # setup server to receive acks
 def receive():
+    global highestSequentialSeqNum
     global nextAck
     global relayConnected
     try:
@@ -32,20 +36,23 @@ def receive():
         connection, address = s.accept()
         print('Client Connection:', address)  # Print the connected client address
         relayConnected = True
-        print("got here")
         while True:
             data = connection.recv(1024)  # read the client message
             data_variable = pickle.loads(data)
             print("received seq: " + str(data_variable.seqNum) + "\n", end='')
-            packetList.append(data_variable)
-            nextAck = Packet(data_variable.packetType,0,b'',0,data_variable.seqNum)
+            if data_variable.seqNum == (highestSequentialSeqNum + 1):
+                highestSequentialSeqNum = data_variable.seqNum
+                packetList.append(data_variable)
+            nextAck = Packet(data_variable.packetType, 0, b'', 0, highestSequentialSeqNum)
             if data_variable.packetType == 2:
                 break
+        print("done listening")
         connection.close()
     s.close()
 
 
 def sendToRelay():
+    global done
     while not relayConnected:
         time.sleep(1)
     global nextAck
@@ -56,14 +63,18 @@ def sendToRelay():
             packet = pickle.dumps(nextAck)
             s.send(packet)
             print("sent ack: " + str(nextAck.ackNum))
+            if nextAck.packetType == 2:
+                done = True
+                break
             nextAck = None
-        time.sleep(1)
+        time.sleep(.03)
+    print("done sending")
     s.close()
 
 
 start_new_thread(sendToRelay, ())
 start_new_thread(receive, ())
-done = False
+
 while not done:
     time.sleep(1)
 print('Data Sent to Server')
