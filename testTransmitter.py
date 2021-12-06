@@ -1,5 +1,4 @@
 import socket, pickle
-import main
 from packet import Packet
 import time
 from _thread import *
