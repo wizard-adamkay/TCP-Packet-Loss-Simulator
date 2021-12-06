@@ -1,8 +1,14 @@
 import socket, pickle
+import main
 from packet import Packet
 import time
 from _thread import *
 import sys
+import logging
+
+#logging config
+logging.basicConfig(filename="logTransmit",filemode='a',format= '%(message)s',level=logging.INFO)
+logging.info("!!! NEW TRANSMISSION !!!")
 
 lastAckedNum = 0
 windowSize = 1
@@ -49,6 +55,7 @@ def receive():
             data = connection.recv(1024)  # read the client message
             data_variable = pickle.loads(data)
             print("recieved ack: " + str(data_variable.ackNum) + "\n", end='')
+            logging.info("ACKed: " + str(data_variable.ackNum))
             acksReceivedSinceWindowChange+=1
             if acksReceivedSinceWindowChange >= windowSize and windowSize < 16:
                 windowSize*=2
@@ -72,6 +79,7 @@ def transmit():
             packet = pickle.dumps(packets[currentPacket])
             s.send(packet)
             print("sent packet: " + str(packets[currentPacket].seqNum) + "\n", end='')
+            logging.info("Sent: " + str(packets[currentPacket].seqNum))
             time.sleep(.1)
             if packets[currentPacket].packetType == 2:
                 global done

@@ -3,6 +3,12 @@ from packet import Packet
 import time
 from _thread import *
 import sys
+import logging
+
+#logging config
+logging.basicConfig(filename="logReceive",filemode='a',format= '%(message)s',level=logging.INFO)
+logging.info("!!! NEW TRANSMISSION !!!")
+
 nextAck = None
 packetList = []
 relayConnected = False
@@ -37,6 +43,7 @@ def receive():
             data = connection.recv(1024)  # read the client message
             data_variable = pickle.loads(data)
             print("received seq: " + str(data_variable.seqNum) + "\n", end='')
+            logging.info("Received: " + str(data_variable.seqNum))
             packetList.append(data_variable)
             nextAck = Packet(data_variable.packetType,0,b'',0,data_variable.seqNum)
             if data_variable.packetType == 2:
@@ -56,6 +63,7 @@ def sendToRelay():
             packet = pickle.dumps(nextAck)
             s.send(packet)
             print("sent ack: " + str(nextAck.ackNum))
+            logging.info("ACKed: " + str(nextAck.ackNum))
             nextAck = None
         time.sleep(1)
     s.close()

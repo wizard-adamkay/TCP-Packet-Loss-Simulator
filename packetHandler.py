@@ -3,6 +3,12 @@ import sys
 from _thread import *
 from packet import Packet
 import time
+import logging
+
+#logging config
+logging.basicConfig(filename="logNetwork",filemode='a',format= '%(message)s',level=logging.INFO)
+logging.info("!!! NEW TRANSMISSION !!!")
+
 
 myHost = ''
 transmitterHost = 'localhost'
@@ -40,6 +46,7 @@ def listenToTransmitter():
             data = connection.recv(1024)  # read the client message
             data_variable = pickle.loads(data)
             print("received from transmitter seq:" + str(data_variable.seqNum))
+            logging.info("Transmitter > Network: " + str(data_variable.seqNum))
             packetsFromTransmitter.append(data_variable)
             if data_variable.packetType == 2:
                 break
@@ -69,6 +76,7 @@ def listenToReceiver():
             data = connection.recv(1024)  # read the client message
             data_variable = pickle.loads(data)
             print("received from receiver ack:" + str(data_variable.ackNum))
+            logging.info("Receiver > Network: " + str(data_variable.ackNum))
             packetsFromReceiver.append(data_variable)
             if data_variable.packetType == 2:
                 break
@@ -87,6 +95,7 @@ def sendToTransmitter():
             packet = pickle.dumps(packetsFromReceiver[lastPacketSentToTransmitter])
             s.send(packet)
             print("packet sent to transmitter ack: " + str(packetsFromReceiver[lastPacketSentToTransmitter].ackNum))
+            logging.info("Network > Transmitter: " + str(packetsFromReceiver[lastPacketSentToTransmitter].ackNum))
             lastPacketSentToTransmitter += 1
             continue
         time.sleep(.1)
@@ -103,6 +112,7 @@ def sendToReceiver():
         if len(packetsFromTransmitter) > lastPacketSentToReceiver:
             packet = pickle.dumps(packetsFromTransmitter[lastPacketSentToReceiver])
             print("packet sent to receiver seq: " + str(packetsFromTransmitter[lastPacketSentToReceiver].seqNum))
+            logging.info("Network > Receiver: " + str(packetsFromTransmitter[lastPacketSentToReceiver].seqNum))
             lastPacketSentToReceiver += 1
             s.send(packet)
             continue
