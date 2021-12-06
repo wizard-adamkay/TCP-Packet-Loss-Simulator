@@ -117,12 +117,10 @@ def transmit():
             timeOutThreshhold = max(timeOutThreshhold*.85, 1)
             print("sent packet: " + str(packets[currentPacket].seqNum) + "\n", end='')
             logging.info("Sent: " + str(packets[currentPacket].seqNum))
-            time.sleep(.1)
             if packets[currentPacket].packetType == 2:
                 global done
                 done = True
                 break
-            currentPacket += 1
             time.sleep(.001)
             currentPacket =min(currentPacket + 1, len(packets) - 1)
         if done:

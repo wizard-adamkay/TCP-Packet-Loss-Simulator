@@ -77,7 +77,7 @@ def sendToRelay():
                 done = True
                 break
             nextAck = None
-        time.sleep(.03)
+        time.sleep(.2)
     print("done sending")
     s.close()
 
