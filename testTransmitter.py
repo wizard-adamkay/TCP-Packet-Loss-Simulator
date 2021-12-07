@@ -70,6 +70,7 @@ def receive():
                 break
             if data_variable.ackNum == lastAckedNum:
                 print("duplicate ack detected!")
+                logging.info("Duplicate ACK: " + str(data_variable.ackNum))
                 duplicateAckReceived = True
                 continue
 
@@ -105,6 +106,7 @@ def transmit():
             windowSize = 1
             currentPacket = lastAckedNum + 1
             print("TIMEOUT " + str(time.time() - timeOfLastSend))
+            logging.info("TIMEOUT " + str(time.time() - timeOfLastSend))
             timeOfLastSend = time.time()
             timeOutThreshhold *= 1.2
         #Checks available windowsize to see if room for another packet
