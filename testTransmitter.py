@@ -24,7 +24,7 @@ done = False
 packets = []
 with open('Adam.png', "rb") as f:
     seqNum = 0
-    CHUNK_SIZE = 50
+    CHUNK_SIZE = 5
     while True:
         bytes_read = f.read(CHUNK_SIZE)
         if not bytes_read:
@@ -73,10 +73,10 @@ def receive():
                 logging.info("Duplicate ACK: " + str(data_variable.ackNum))
                 duplicateAckReceived = True
                 continue
-
-            acksReceivedSinceWindowChange+=1
-            if acksReceivedSinceWindowChange >= windowSize and windowSize < 16:
-                windowSize*=2
+            windowSize += data_variable.ackNum - lastAckedNum
+            # acksReceivedSinceWindowChange+=1
+            # if acksReceivedSinceWindowChange >= windowSize and windowSize < 256:
+            #     windowSize*=2
             lastAckedNum = data_variable.ackNum
             if data_variable.packetType == 2:
                 break
@@ -89,7 +89,7 @@ def transmit():
     global windowSize
     global timeOfLastSend
     global timeOutThreshhold
-    global  duplicateAckReceived
+    global duplicateAckReceived
     s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     s.connect((relayHost, relayPort))
     currentPacket = 0
@@ -122,7 +122,7 @@ def transmit():
                 global done
                 done = True
                 break
-            time.sleep(.001)
+            time.sleep(.02)
             currentPacket =min(currentPacket + 1, len(packets) - 1)
         if done:
             break

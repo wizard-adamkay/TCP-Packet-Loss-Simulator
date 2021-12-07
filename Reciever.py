@@ -47,8 +47,6 @@ def receive():
             data_variable = pickle.loads(data)
             print("received seq: " + str(data_variable.seqNum) + "\n", end='')
             logging.info("Received: " + str(data_variable.seqNum))
-            packetList.append(data_variable)
-            nextAck = Packet(data_variable.packetType,0,b'',0,data_variable.seqNum)
             if data_variable.seqNum == (highestSequentialSeqNum + 1):
                 highestSequentialSeqNum = data_variable.seqNum
                 packetList.append(data_variable)

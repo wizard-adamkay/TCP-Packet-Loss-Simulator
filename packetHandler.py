@@ -54,7 +54,8 @@ def listenToTransmitter():
             logging.info("Transmitter > Network: " + str(data_variable.seqNum))
             packetsFromTransmitter.append(data_variable)
             packetsFromTransmitterTimes.append(time.time())
-            GUI.update_graph(0,data_variable.seqNum)
+            GUI.update_graph1(0,data_variable.seqNum)
+            GUI.update_graph2(0, data_variable.windowSize)
             # todo close connection when stop clicked
         connection.close()
     s.close()
@@ -86,6 +87,7 @@ def listenToReceiver():
             logging.info("Receiver > Network: " + str(data_variable.ackNum))
             packetsFromReceiver.append(data_variable)
             packetsFromReceiverTimes.append(time.time())
+            GUI.update_graph1(1, data_variable.ackNum)
             # todo close connection when stop clicked
         connection.close()
     s.close()
@@ -108,8 +110,7 @@ def sendToTransmitter():
                 print("packet from receiver dropped ack: " + str(packetsFromReceiver[lastPacketSentToTransmitter].ackNum))
                 logging.info("Network X Transmitter: " + str(packetsFromReceiver[lastPacketSentToTransmitter].ackNum))
             lastPacketSentToTransmitter += 1
-            continue
-        time.sleep(.05)
+        time.sleep(.02)
     s.close()
 
 
@@ -131,7 +132,7 @@ def sendToReceiver():
                 print("packet from transmitter dropped seq: " + str(packetsFromTransmitter[lastPacketSentToReceiver].seqNum))
                 logging.info("Network X Receiver: " + str(packetsFromTransmitter[lastPacketSentToReceiver].seqNum))
             lastPacketSentToReceiver += 1
-        time.sleep(.03)
+        time.sleep(.02)
     s.close()
 
 
