@@ -9,17 +9,19 @@ import logging
 logging.basicConfig(filename="logTransmit",filemode='a',format= '%(message)s',level=logging.INFO)
 logging.info("!!! NEW TRANSMISSION !!!")
 
-myHost = ''
+myHost = '192.168.0.16'
 myPort = 8001
-relayHost = 'localhost'
+relayHost = '192.168.0.17'
 relayPort = 8000
 timeOfLastSend = time.time()
 timeOutThreshhold = 1
 lastAckedNum = 0
 windowSize = 1
 acksReceivedSinceWindowChange = 0
+maxWindowSize = 32
 duplicateAckReceived = False
 done = False
+dupAckCount = 0
 # build packets
 packets = []
 with open('Adam.png', "rb") as f:
@@ -41,7 +43,7 @@ def receive():
     global acksReceivedSinceWindowChange
     global windowSize
     global duplicateAckReceived
-
+    global dupAckCount
     try:
         s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         print("Socket successfully created")
@@ -68,12 +70,15 @@ def receive():
                 global done
                 done = True
                 break
+            if data_variable.ackNum != lastAckedNum:
+                dupAckCount = 0
+                windowSize = min(maxWindowSize, windowSize + (data_variable.ackNum - lastAckedNum))
             if data_variable.ackNum == lastAckedNum:
                 print("duplicate ack detected!")
                 logging.info("Duplicate ACK: " + str(data_variable.ackNum))
-                duplicateAckReceived = True
+                dupAckCount += 1
+                #duplicateAckReceived = True
                 continue
-            windowSize += data_variable.ackNum - lastAckedNum
             # acksReceivedSinceWindowChange+=1
             # if acksReceivedSinceWindowChange >= windowSize and windowSize < 256:
             #     windowSize*=2
@@ -90,14 +95,16 @@ def transmit():
     global timeOfLastSend
     global timeOutThreshhold
     global duplicateAckReceived
+    global dupAckCount
     s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     s.connect((relayHost, relayPort))
     currentPacket = 0
     while 1:
         # Checks for duplicate acks
         # will divide windowsize in half and start from last acked packet if triggered
-        if duplicateAckReceived:
-            duplicateAckReceived = False
+        if dupAckCount >= 3:
+            dupAckCount = 0
+            #duplicateAckReceived = False
             windowSize = max(windowSize / 2, 1)
             currentPacket = lastAckedNum + 1
         # Checking for timeout, will trigger if a packet hasn't been sent in timeOutThreshhold seconds
@@ -122,7 +129,7 @@ def transmit():
                 global done
                 done = True
                 break
-            time.sleep(.02)
+            time.sleep(.1)
             currentPacket =min(currentPacket + 1, len(packets) - 1)
         if done:
             break

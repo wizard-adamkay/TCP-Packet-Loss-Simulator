@@ -1,6 +1,6 @@
 import socket, pickle
 import sys
-from _thread import *
+import _thread
 from packet import Packet
 import time
 import logging
@@ -13,8 +13,8 @@ logging.info("!!! NEW TRANSMISSION !!!")
 
 
 myHost = ''
-transmitterHost = 'localhost'
-receiverHost = 'localhost'
+transmitterHost = '192.168.0.16'
+receiverHost = '192.168.0.18'
 myPortTransmitter = 8000
 myPortReceiver = 8003
 receiverPort = 8004
@@ -26,9 +26,10 @@ packetsFromReceiver = []
 packetsFromReceiverTimes = []
 lastPacketSentToTransmitter = 0
 transmitterConnected = False
+packetsDropped = 0
+sleepBetweenSends = .07
 
-
-def listenToTransmitter():
+def listenToTransmitter(_lock):
     global transmitterConnected
     try:
         s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -38,7 +39,7 @@ def listenToTransmitter():
     try:
         s.bind((myHost, myPortTransmitter))
     except socket.error as msg:
-        print('Bind failed. Error Code : ' + str(msg[0]) + ' Message ' + msg[1])
+        print('Bind failed. Error Code : ' + str(msg[0]) + ' Message ' + str(msg[1]))
         sys.exit()
     print('Socket bind complete')
     print("listening")
@@ -54,15 +55,17 @@ def listenToTransmitter():
             logging.info("Transmitter > Network: " + str(data_variable.seqNum))
             packetsFromTransmitter.append(data_variable)
             packetsFromTransmitterTimes.append(time.time())
+            _lock.acquire()
             GUI.update_graph1(0,data_variable.seqNum)
             GUI.update_graph2(0, data_variable.windowSize)
+            _lock.release()
             # todo close connection when stop clicked
         connection.close()
     s.close()
 
 
 # could combine listentoreciever and listen to transmitter into 1 function
-def listenToReceiver():
+def listenToReceiver(_lock):
     try:
         s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         print("Socket successfully created")
@@ -87,13 +90,16 @@ def listenToReceiver():
             logging.info("Receiver > Network: " + str(data_variable.ackNum))
             packetsFromReceiver.append(data_variable)
             packetsFromReceiverTimes.append(time.time())
+            _lock.acquire()
             GUI.update_graph1(1, data_variable.ackNum)
+            _lock.release()
             # todo close connection when stop clicked
         connection.close()
     s.close()
 
 
 def sendToTransmitter():
+    global packetsDropped
     while not transmitterConnected:
         time.sleep(1)
     s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -107,17 +113,21 @@ def sendToTransmitter():
                 print("packet sent to transmitter ack: " + str(packetsFromReceiver[lastPacketSentToTransmitter].ackNum))
                 logging.info("Network > Transmitter: " + str(packetsFromReceiver[lastPacketSentToTransmitter].ackNum))
             else:
+                packetsDropped += 1
+                GUI.update_dropped_packets(packetsDropped)
                 print("packet from receiver dropped ack: " + str(packetsFromReceiver[lastPacketSentToTransmitter].ackNum))
                 logging.info("Network X Transmitter: " + str(packetsFromReceiver[lastPacketSentToTransmitter].ackNum))
             lastPacketSentToTransmitter += 1
-        time.sleep(.02)
+        time.sleep(sleepBetweenSends)
     s.close()
 
 
 def sendToReceiver():
+    global packetsDropped
     while not transmitterConnected:
         time.sleep(1)
         GUI.printTest()
+
     s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     s.connect((receiverHost, receiverPort))
     global lastPacketSentToReceiver
@@ -129,18 +139,21 @@ def sendToReceiver():
                 print("packet sent to receiver seq: " + str(packetsFromTransmitter[lastPacketSentToReceiver].seqNum))
                 logging.info("Network > Receiver: " + str(packetsFromTransmitter[lastPacketSentToReceiver].seqNum))
             else:
+                packetsDropped += 1
+                GUI.update_dropped_packets(packetsDropped)
                 print("packet from transmitter dropped seq: " + str(packetsFromTransmitter[lastPacketSentToReceiver].seqNum))
                 logging.info("Network X Receiver: " + str(packetsFromTransmitter[lastPacketSentToReceiver].seqNum))
             lastPacketSentToReceiver += 1
-        time.sleep(.02)
+        time.sleep(sleepBetweenSends)
     s.close()
 
 
 GUI = GUI()
-start_new_thread(listenToTransmitter, ())
-start_new_thread(listenToReceiver, ())
-start_new_thread(sendToTransmitter, ())
-start_new_thread(sendToReceiver, ())
+lock = _thread.allocate_lock()
+_thread.start_new_thread(listenToTransmitter, (lock,))
+_thread.start_new_thread(listenToReceiver, (lock,))
+_thread.start_new_thread(sendToTransmitter, ())
+_thread.start_new_thread(sendToReceiver, ())
 GUI.run()
 while 1:
     time.sleep(1)
