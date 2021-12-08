@@ -12,14 +12,14 @@ logging.info("!!! NEW TRANSMISSION !!!")
 nextAck = None
 packetList = []
 relayConnected = False
-myHost = ''
-relayHost = 'localhost'
+myHost = '192.168.0.18'
+relayHost = '192.168.0.17'
 myPort = 8004
 relayPort = 8003
 highestSequentialSeqNum = -1
 done = False
-
-
+consecutiveDuplicateAcksSent = 0
+lastAckNumSent = -1
 # setup server to receive acks
 def receive():
     global highestSequentialSeqNum
@@ -60,6 +60,8 @@ def receive():
 
 def sendToRelay():
     global done
+    global consecutiveDuplicateAcksSent
+    global lastAckNumSent
     while not relayConnected:
         time.sleep(1)
     global nextAck
@@ -67,14 +69,21 @@ def sendToRelay():
     s.connect((relayHost, relayPort))
     while 1:
         if nextAck is not None:
+            if nextAck.ackNum == lastAckNumSent:
+                consecutiveDuplicateAcksSent+=1
+            else:
+                consecutiveDuplicateAcksSent = 0
             packet = pickle.dumps(nextAck)
             s.send(packet)
+            lastAckNumSent = nextAck.ackNum
             print("sent ack: " + str(nextAck.ackNum))
             logging.info("ACKed: " + str(nextAck.ackNum))
             if nextAck.packetType == 2:
                 done = True
                 break
             nextAck = None
+        if consecutiveDuplicateAcksSent >= 3:
+            time.sleep(.5)
         time.sleep(.2)
     print("done sending")
     s.close()
