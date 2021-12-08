@@ -62,8 +62,6 @@ class GUI:
             self.delay = num
 
         # Graph Setup
-        info = Frame(top)
-        info.pack(side=BOTTOM)
         graphs = Frame(top)
         graphs.pack(side=LEFT)
         controls = Frame(top)
