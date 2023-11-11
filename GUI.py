@@ -24,6 +24,7 @@ class GUI:
     line4, = b.plot([0], [0], 'b-')
     lineList2 = [line3, line4]
     droppedPackets = ""
+
     def printTest(self):
         print("Delay: " + str(self.delay) + " Loss: " + str(self.packetLoss))
 

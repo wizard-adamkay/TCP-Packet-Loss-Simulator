@@ -5,7 +5,7 @@ from _thread import *
 import sys
 import logging
 
-#logging config
+# logging config
 logging.basicConfig(filename="logTransmit",filemode='a',format= '%(message)s',level=logging.INFO)
 logging.info("!!! NEW TRANSMISSION !!!")
 

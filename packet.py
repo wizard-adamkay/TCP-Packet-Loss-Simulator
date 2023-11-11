@@ -1,6 +1,7 @@
 from dataclasses import dataclass
 from typing import List
 
+
 class Packet:
 
     def __init__(self, packetType: int, seqNum: int, data: bytes, windowSize: int, ackNum: int):

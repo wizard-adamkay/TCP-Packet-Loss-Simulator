@@ -7,8 +7,8 @@ import logging
 from GUI import GUI
 import random
 
-#logging config
-logging.basicConfig(filename="logNetwork",filemode='a',format= '%(message)s',level=logging.INFO)
+# logging config
+logging.basicConfig(filename="logNetwork", filemode='a', format='%(message)s', level=logging.INFO)
 logging.info("!!! NEW TRANSMISSION !!!")
 
 
@@ -28,6 +28,7 @@ lastPacketSentToTransmitter = 0
 transmitterConnected = False
 packetsDropped = 0
 sleepBetweenSends = .07
+
 
 def listenToTransmitter(_lock):
     global transmitterConnected
@@ -105,7 +106,7 @@ def sendToTransmitter():
     s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     s.connect((transmitterHost, transmitterPort))
     global lastPacketSentToTransmitter
-    while 1:
+    while True:
         if len(packetsFromReceiver) > lastPacketSentToTransmitter and time.time() - packetsFromReceiverTimes[lastPacketSentToTransmitter] >= (float(GUI.delay) * .001):
             if random.randint(1, 100) >= int(GUI.packetLoss):
                 packet = pickle.dumps(packetsFromReceiver[lastPacketSentToTransmitter])
@@ -131,7 +132,7 @@ def sendToReceiver():
     s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     s.connect((receiverHost, receiverPort))
     global lastPacketSentToReceiver
-    while 1:
+    while True:
         if len(packetsFromTransmitter) > lastPacketSentToReceiver and time.time() - packetsFromTransmitterTimes[lastPacketSentToReceiver] >= (float(GUI.delay) * .001):
             if random.randint(1, 100) >= int(GUI.packetLoss):
                 packet = pickle.dumps(packetsFromTransmitter[lastPacketSentToReceiver])

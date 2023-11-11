@@ -20,6 +20,8 @@ highestSequentialSeqNum = -1
 done = False
 consecutiveDuplicateAcksSent = 0
 lastAckNumSent = -1
+
+
 # setup server to receive acks
 def receive():
     global highestSequentialSeqNum
